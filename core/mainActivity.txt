@@ -1,0 +1,149 @@
+public class MainActivity extends AppCompatActivity {
+
+    // declare variables
+    private boolean songPlay = true;
+    private RotateAnimation anim;
+    private MediaPlayer mp, song;
+    private Button btnTwitch, btnTwitter, btnSong;
+    private ImageView imgDoc;
+    private ListView audioList;
+
+    private final String[] audioArray = {"Are you kidding me!", "Bean poll", "The best a man can get", "Block Buster", "Chinese", "Yea, this guy right here", "Chubby cheek kid", "The good looks", "Firm Handshakes", "F*cking game",
+            "Get a grip", "Get a grip 2", "Get em' off the servers!", "Get outta' my face", "Get outta' my face 2", "Get em' outta here", "Get em' outta here!", "Hip fire", "Idiot kid!", "Montage highlight", "The bullet proof mullet", "Oh, baby, yea!",
+            "Nobody one ups the doctor", "Powerhouse", "Punk kid", "RAAAUUUULL!", "RAAAUUUULL! 2", "Semi-boner", "Shit hole game!", "Slice you up!", "Stop slobbering", "That's where I'm from!", "The answers no", "This replay!",
+            "Told ya I'm gonna' win", "Violence, Speed, Momentum!", "Wake up!", "Wake up Daybreak!", "Ya! Ya! Ya!"};
+
+    private final int[] resID = {R.raw.areyoukiddingme, R.raw.beanpoll, R.raw.bestmancanget, R.raw.blockbuster, R.raw.chinese, R.raw.chinese2, R.raw.chubbycheek, R.raw.desciption, R.raw.firmhandshakes, R.raw.fuckingame,
+            R.raw.getagrip1, R.raw.getagrip, R.raw.getofftheservers, R.raw.getoutofmyface, R.raw.outofface, R.raw.getouttahere2, R.raw.getouttahere, R.raw.hipfire, R.raw.idiotkid, R.raw.montage, R.raw.mullet, R.raw.ohbabyyea, R.raw.oneups,
+            R.raw.powerhouse, R.raw.punkkid, R.raw.raul1, R.raw.raul2, R.raw.semiboner, R.raw.shitholegame, R.raw.sliceyouup, R.raw.slobbering, R.raw.thatswhereimfrom, R.raw.theanswersno, R.raw. thisreplay,
+            R.raw.toldyouwin, R.raw.violencespeedmomentum, R.raw.wakeup, R.raw.wakeupdaybreak, R.raw.yayaya};
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // initialize variables
+        mp = new MediaPlayer();
+        song= new MediaPlayer();
+
+        btnTwitch = (Button) findViewById(R.id.btnTwitch);
+        btnTwitter = (Button) findViewById(R.id.btnTwitter);
+        btnSong = (Button) findViewById(R.id.btnSong);
+        imgDoc = (ImageView) findViewById(R.id.imgDoc);
+
+        // set up rotation animation
+        anim = new RotateAnimation(0.0f, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        anim.setInterpolator(new LinearInterpolator());
+        anim.setRepeatCount(Animation.INFINITE);
+        anim.setDuration(600);
+
+        // set up the listview
+        audioList = (ListView) findViewById(R.id.main_ListView);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.list_view, R.id.txtAudioSample, audioArray);
+        audioList.setAdapter(adapter);
+
+        // listview listener
+        audioList.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                playAudio(position);
+            }
+        });
+
+        // button listeners
+        btnTwitch.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                pauseSong();
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("twitch://open?stream=DrDisRespectLIVE"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://m.twitch.tv/DrDisRespectLIVE")));
+                }
+            }
+        });
+
+        btnTwitter.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                pauseSong();
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("twitter://user?user_id=146556805"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://mobile.twitter.com/DrDisRespect")));
+                }
+            }
+        });
+
+        btnSong.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                song.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        song.reset();
+                        song.release();
+                        btnSong.setBackgroundResource(R.drawable.musicnote);
+                        songPlay = true;
+                    }
+                });
+
+                if(songPlay){
+                    song = MediaPlayer.create(MainActivity.this, R.raw.gillette);
+                    song.setVolume(0.4f, 0.4f);
+                    songPlay = false;
+                }
+
+                if(song.isPlaying()) {
+                    pauseSong();
+                } else {
+                    song.start();
+                    btnSong.setBackgroundResource(R.drawable.speaker);
+                }
+
+            }
+        });
+    }
+
+    // play the audio sample then release it from the media player as soon as it is finished
+    public void playAudio (int audioIndex){
+        mp = MediaPlayer.create(MainActivity.this, resID[audioIndex]);
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            public void onCompletion(MediaPlayer mp){
+                mp.reset();
+                mp.release();
+                imgDoc.clearAnimation();
+                imgDoc.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        mp.start();
+        imgDoc.setVisibility(View.VISIBLE);
+        imgDoc.startAnimation(anim);
+    }
+
+    //  pause the music when home button is pressed, and when back button is pressed
+    public void onPause(){
+        super.onPause();
+        pauseSong();
+    }
+
+    public void onStop(){
+        super.onStop();
+        pauseSong();
+    }
+
+    public void onBackPressed(){
+        pauseSong();
+        moveTaskToBack(true);
+    }
+
+    // pause song
+    public void pauseSong(){
+        if(song.isPlaying()){
+            song.pause();
+            btnSong.setBackgroundResource(R.drawable.speakermuted);
+        }
+    }
+
+}
